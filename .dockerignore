@@ -1,0 +1,12 @@
+*.exe
+*.graphql
+.editorconfig
+.env
+.git/
+.gitignore
+LICENSE
+__debug_bin
+gqlgen.yml
+vendor/
+placepanda
+Dockerfile
