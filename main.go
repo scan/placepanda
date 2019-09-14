@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
 	"gopkg.in/h2non/bimg.v1"
+	_ "github.com/joho/godotenv/autoload"
 )
 
 func corsMiddleware(h http.Handler) http.Handler {

@@ -1,42 +1,14 @@
 package main
 
 import (
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strconv"
-	"time"
 
 	"github.com/gorilla/mux"
 	"gopkg.in/h2non/bimg.v1"
 )
-
-var pandas [][]byte
-
-func init() {
-	rand.Seed(time.Now().Unix())
-
-	baseDir, err := filepath.Abs(filepath.Join(filepath.Dir(os.Args[0]), "pandas"))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	files, err := ioutil.ReadDir(baseDir)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	pandas = make([][]byte, len(files))
-	for i := range files {
-		pandas[i], err = bimg.Read(filepath.Join(baseDir, files[i].Name()))
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-}
 
 func respondWithError(err error, w http.ResponseWriter, status int) {
 	w.Header().Set("Content-Type", "plain/text")
@@ -46,6 +18,12 @@ func respondWithError(err error, w http.ResponseWriter, status int) {
 }
 
 func pandaHandler(w http.ResponseWriter, r *http.Request) {
+	pandas, err := listOfPandas()
+	if err != nil {
+		respondWithError(err, w, http.StatusInternalServerError)
+		return
+	}
+
 	vars := mux.Vars(r)
 	width, err := strconv.Atoi(vars["width"])
 	if err != nil {
@@ -66,7 +44,11 @@ func pandaHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pandaNum := rand.Int() % len(pandas)
-	pandaFile := pandas[pandaNum]
+	pandaFile, err := downloadPanda(pandas[pandaNum])
+	if err != nil {
+		respondWithError(err, w, http.StatusInternalServerError)
+		return
+	}
 
 	img := bimg.NewImage(pandaFile)
 	img.SmartCrop(width, height)
