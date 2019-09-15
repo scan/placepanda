@@ -18,7 +18,6 @@ RUN apt-get update -qq && \
     apt-get install -y ca-certificates libglib2.0 libvips
 
 COPY --from=builder /app /app
-COPY ./pandas /pandas
 
 EXPOSE 8080
 
