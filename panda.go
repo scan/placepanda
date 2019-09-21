@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -42,19 +43,60 @@ func pandaHandler(w http.ResponseWriter, r *http.Request) {
 	if height < 0 {
 		height = 0
 	}
+	key := fmt.Sprintf("cache/%v/%v.jpg", width, height)
 
-	pandaNum := rand.Int() % len(pandas)
-	pandaFile, err := downloadPanda(pandas[pandaNum])
-	if err != nil {
-		respondWithError(err, w, http.StatusInternalServerError)
-		return
+	var buf []byte
+	if checkCache(width, height) {
+		buf, err = downloadPanda(key)
+
+		if err != nil {
+			respondWithError(err, w, http.StatusBadRequest)
+			return
+		}
+
+		w.Header().Set("X-Cache-Info", "HIT")
+	} else {
+		pandaNum := rand.Int() % len(pandas)
+		pandaFile, err := downloadPanda(pandas[pandaNum])
+		if err != nil {
+			respondWithError(err, w, http.StatusInternalServerError)
+			return
+		}
+
+		img := bimg.NewImage(pandaFile)
+		img.SmartCrop(width, height)
+		buf = img.Image()
+
+		w.Header().Set("X-Cache-Info", "MISS")
+
+		go func() {
+			err := uploadPanda(key, buf)
+			if err != nil {
+				log.Printf("Error uploading cached image: %v", err)
+			}
+		}()
 	}
 
-	img := bimg.NewImage(pandaFile)
-	img.SmartCrop(width, height)
+	writeResponse(buf, w)
+}
 
+func writeResponse(buf []byte, w http.ResponseWriter) (err error) {
 	w.Header().Set("Content-Type", "image/jpeg")
 	w.Header().Set("Cache-Control", "public, max-age=15552000")
+	w.Header().Set("Vary", "DPR, Accept")
 	w.WriteHeader(http.StatusOK)
-	w.Write(img.Image())
+
+	_, err = w.Write(buf)
+	return
+}
+
+func checkCache(width, height int) bool {
+	key := fmt.Sprintf("cache/%v/%v.jpg", width, height)
+
+	info, err := getPandaInfo(key)
+
+	if err != nil || info == nil {
+		return false
+	}
+	return true
 }

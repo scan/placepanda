@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"log"
+	"net/http"
 	"os"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -83,5 +86,75 @@ func downloadPanda(key string) (data []byte, err error) {
 	}
 
 	data = buf.Bytes()
+	return
+}
+
+type pandaInfo struct {
+	contentType  string
+	lastModified time.Time
+}
+
+func getPandaInfo(key string) (*pandaInfo, error) {
+	sess, err := session.NewSession(&aws.Config{
+		Endpoint:    aws.String(s3Endpoint),
+		Region:      aws.String(s3Region),
+		Credentials: s3Credentials,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	svc := s3.New(sess)
+	info, err := svc.HeadObject(&s3.HeadObjectInput{
+		Bucket: aws.String(s3Bucket),
+		Key:    aws.String(key),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if info == nil {
+		return nil, nil
+	}
+
+	var lastModified time.Time
+	if info.LastModified != nil {
+		lastModified = *info.LastModified
+	} else {
+		lastModified = time.Now()
+	}
+
+	contentType := "image/jpeg"
+	if info.ContentType != nil {
+		contentType = *info.ContentType
+	}
+
+	return &pandaInfo{
+		contentType:  contentType,
+		lastModified: lastModified,
+	}, nil
+}
+
+func uploadPanda(key string, data []byte) (err error) {
+	sess, err := session.NewSession(&aws.Config{
+		Endpoint:    aws.String(s3Endpoint),
+		Region:      aws.String(s3Region),
+		Credentials: s3Credentials,
+	})
+	if err != nil {
+		return
+	}
+
+	uploader := s3manager.NewUploader(sess)
+	_, err = uploader.Upload(&s3manager.UploadInput{
+		Bucket:             aws.String(s3Bucket),
+		Key:                aws.String(key),
+		ACL:                aws.String("private"),
+		Body:               bytes.NewReader(data),
+		ContentType:        aws.String(http.DetectContentType(data)),
+		ContentDisposition: aws.String("attachment"),
+	})
+
 	return
 }
