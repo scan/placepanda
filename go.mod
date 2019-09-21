@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/99designs/gqlgen v0.9.3 // indirect
 	github.com/aws/aws-sdk-go v1.20.21
+	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/gorilla/handlers v1.4.2
 	github.com/gorilla/mux v1.7.3
 	github.com/gorilla/websocket v1.4.1 // indirect

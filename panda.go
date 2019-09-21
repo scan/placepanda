@@ -43,6 +43,18 @@ func pandaHandler(w http.ResponseWriter, r *http.Request) {
 	if height < 0 {
 		height = 0
 	}
+
+	dprFactor := 1.0
+
+	if dprHeader := r.Header.Get("DPR"); len(dprHeader) > 0 {
+		if dprFactor, err = strconv.ParseFloat(dprHeader, 64); err != nil {
+			dprFactor = 1.0
+		}
+	}
+
+	width = int(float64(width) * dprFactor)
+	height = int(float64(height) * dprFactor)
+
 	key := fmt.Sprintf("cache/%v/%v.jpg", width, height)
 
 	var buf []byte
