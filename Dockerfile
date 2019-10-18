@@ -1,7 +1,6 @@
-FROM golang:1.13 AS builder
+FROM golang:1.13-alpine AS builder
 
-RUN apt-get update -qq && \
-    apt-get install -y ca-certificates build-essential libglib2.0-dev libvips-dev && \
+RUN apk add --update --upgrade ca-certificates build-base glib-dev vips-dev && \
     mkdir -p /src
 WORKDIR /src
 
@@ -12,10 +11,9 @@ RUN go mod download && \
 COPY . ./
 RUN GOOS=linux GOARCH=amd64 go build -ldflags '-w -s -h' -a -o /app
 
-FROM debian:buster-slim
+FROM alpine:3.10
 
-RUN apt-get update -qq && \
-    apt-get install -y ca-certificates libglib2.0 libvips
+RUN apk add --update --upgrade ca-certificates glib vips
 
 COPY --from=builder /app /app
 
