@@ -2,10 +2,13 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.13
+      - image: golang:1.13-alpine
     working_directory: /app
     steps:
     - checkout
+    - run:
+        name: Install binary dependencies
+        command: apk add --update --upgrade ca-certificates build-base glib-dev vips-dev
     - restore_cache:
         keys:
         - v1-pkg-cache
