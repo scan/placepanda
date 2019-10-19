@@ -8,4 +8,4 @@ jobs:
     - name: Build Docker Image
       uses: 'actions/docker/cli@master'
       with:
-        args: ["build", "-t", "andrewsomething/static-example:$(echo $GITHUB_SHA | head -c7)", "."]
+        args: 'build -t registry.functional-games.net:$(echo $GITHUB_SHA | head -c7) .'
