@@ -7,4 +7,5 @@ jobs:
     steps:
     - name: Build Docker Image
       uses: 'actions/docker/cli@master'
-      args: ["build", "-t", "andrewsomething/static-example:$(echo $GITHUB_SHA | head -c7)", "."]
+      with:
+        args: ["build", "-t", "andrewsomething/static-example:$(echo $GITHUB_SHA | head -c7)", "."]
