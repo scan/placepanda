@@ -1,0 +1,10 @@
+name: Deploy
+on: [push]
+jobs:
+  build:
+    name: Build Image
+    runs-on: ubuntu-latest
+    steps:
+    - name: Build Docker Image
+      uses: 'actions/docker/cli@master'
+      args: ["build", "-t", "andrewsomething/static-example:$(echo $GITHUB_SHA | head -c7)", "."]
