@@ -5,7 +5,15 @@ jobs:
     name: Build Image
     runs-on: ubuntu-latest
     steps:
-    - name: Build Docker Image
-      uses: 'actions/docker/cli@master'
-      with:
-        args: 'build -t registry.functional-games.net:$(echo $GITHUB_SHA | head -c7) .'
+    - name: Check out
+      uses: actions/checkout@v1
+
+    - name: clean up, docker login && docker build && docker push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GPR_PAT: ${{ secrets.GPR_PAT }}
+      run: |
+        docker login -u ${GITHUB_ACTOR} -p ${GPR_PAT} docker.pkg.github.com
+        docker build -t docker.pkg.github.com/${GITHUB_REPOSITORY}:v${GITHUB_SHA} .
+        curl -s -H "Authorization: Token ${GITHUB_TOKEN}" -H "Accept: application/json" -H "Content-type: application/json" -X POST -d "{ \"ref\": \"refs/tags/v-${GITHUB_SHA}\", \"sha\": \"${GITHUB_SHA}\"}" https://api.github.com/repos/${GITHUB_REPOSITORY}/git/refs
+        docker push docker.pkg.github.com/${GITHUB_REPOSITORY}:v${GITHUB_SHA}
