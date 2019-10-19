@@ -13,6 +13,11 @@ jobs:
         go-version: 1.13
       id: go
 
+    - name: Install binary dependencies
+      run: |
+        sudo apt update -q
+        sudo apt install -y libvips-dev libglib2.0-dev build-essentials
+
     - name: Check out code into the Go module directory
       uses: actions/checkout@v1
 
